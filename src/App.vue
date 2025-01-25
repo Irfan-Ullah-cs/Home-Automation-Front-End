@@ -9,69 +9,77 @@
     <!-- Navigation Drawer -->
     <v-navigation-drawer v-model="drawer" app color="#ffffff" elevation="2">
       <!-- Status Cards -->
-      <v-row dense class="ma-3 status-cards">
-        <v-col cols="6">
-          <v-card elevation="2" class="status-card temperature-card">
-            <div class="d-flex align-center">
-              <v-icon color="orange">mdi-thermometer</v-icon>
-              <span class="status-text ml-2">{{ currentTemp }}°C</span>
-            </div>
-          </v-card>
-        </v-col>
-        <v-col cols="6">
-          <v-card elevation="2" class="status-card humidity-card">
-            <div class="d-flex align-center">
-              <v-icon color="blue">mdi-water-percent</v-icon>
-              <span class="status-text ml-2">{{ currentHumidity }}%</span>
-            </div>
-          </v-card>
-        </v-col>
-      </v-row>
+
+    <!-- Status Cards -->
+    <v-row class="ma-3 status-cards" justify="space-between" align="center">
+      <v-col cols="12">
+        <v-row>
+          <v-col cols="12" sm="6">
+            <v-card elevation="2" class="status-card temperature-card">
+              <div class="d-flex align-center">
+                <v-icon color="orange">mdi-thermometer</v-icon>
+                <span class="status-text ml-2">{{ currentTemp }}°C</span>
+              </div>
+            </v-card>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-card elevation="2" class="status-card humidity-card">
+              <div class="d-flex align-center">
+                <v-icon color="blue">mdi-water-percent</v-icon>
+                <span class="status-text ml-2">{{ currentHumidity }}%</span>
+              </div>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
 
       <!-- Navigation List -->
       <v-list nav>
-        <v-subheader class="nav-subheader">Monitoring</v-subheader>
+  <v-subheader class="nav-subheader">Monitoring</v-subheader>
 
-        <v-list-item to="/sensors">
-          <v-list-item-icon>
-            <v-icon color="#4caf50">mdi-grid</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title>Dashboard</v-list-item-title>
-        </v-list-item>
+  <v-list-item to="/dashboard">
+    <v-list-item-icon>
+      <v-icon color="#4caf50">mdi-grid</v-icon>
+    </v-list-item-icon>
+    <v-list-item-title>Dashboard</v-list-item-title>
+  </v-list-item>
 
-        <v-list-item to="/controls">
-          <v-list-item-icon>
-            <v-icon color="#673ab7">mdi-tune</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title>System Controls</v-list-item-title>
-        </v-list-item>
 
-        <v-list-item to="/analytics">
-          <v-list-item-icon>
-            <v-icon color="#03a9f4">mdi-chart-line</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title>Analytics</v-list-item-title>
-        </v-list-item>
+  <!-- New Weather Item -->
+  <v-list-item to="/weather">
+    <v-list-item-icon>
+      <v-icon color="#2196F3">mdi-weather-sunny</v-icon>
+    </v-list-item-icon>
+    <v-list-item-title>Weather</v-list-item-title>
+  </v-list-item>
 
-        <v-list-item to="/alerts">
-          <v-list-item-icon>
-            <v-icon color="#f44336">mdi-alert-circle</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title class="d-flex align-center">
-            Alerts
-            <v-chip x-small color="error" class="ml-2" v-if="alertCount > 0">
-              {{ alertCount }}
-            </v-chip>
-          </v-list-item-title>
-        </v-list-item>
+  <v-list-item to="/analytics">
+    <v-list-item-icon>
+      <v-icon color="#03a9f4">mdi-chart-line</v-icon>
+    </v-list-item-icon>
+    <v-list-item-title>Analytics</v-list-item-title>
+  </v-list-item>
 
-        <v-list-item to="/settings">
-          <v-list-item-icon>
-            <v-icon color="#607d8b">mdi-cog</v-icon>
-          </v-list-item-icon>
-          <v-list-item-title>Settings</v-list-item-title>
-        </v-list-item>
-      </v-list>
+  <v-list-item to="/alerts">
+    <v-list-item-icon>
+      <v-icon color="#f44336">mdi-alert-circle</v-icon>
+    </v-list-item-icon>
+    <v-list-item-title class="d-flex align-center">
+      Alerts
+      <v-chip x-small color="error" class="ml-2" v-if="alertCount > 0">
+        {{ alertCount }}
+      </v-chip>
+    </v-list-item-title>
+  </v-list-item>
+
+  <v-list-item to="/settings">
+    <v-list-item-icon>
+      <v-icon color="#607d8b">mdi-cog</v-icon>
+    </v-list-item-icon>
+    <v-list-item-title>Settings</v-list-item-title>
+  </v-list-item>
+</v-list>
 
       <!-- Bottom Actions -->
       <template v-slot:append>
@@ -93,20 +101,43 @@
 </template>
 
 <script>
+import { fetchAllSensorsDataApi } from '../src/api/dashboardApi';
 export default {
   name: "App",
   data() {
     return {
       drawer: true,
-      currentTemp: "21.8",
-      currentHumidity: "44",
+      currentTemp: 0,
+      currentHumidity: 0,
       alertCount: 2,
     };
   },
   methods: {
+    async fetchSensorData() {
+      try {
+        const data = await fetchAllSensorsDataApi();
+        const latestReading = data[0]; // Assuming the latest reading is the first one
+        this.currentTemp = latestReading.temperature;
+        this.currentHumidity = latestReading.humidity;
+        this.alertCount = latestReading.alertCount || 0; // Update alert count if available
+      } catch (error) {
+        console.error('Error fetching sensor data:', error);
+      }
+    },
     logout() {
       console.log("Logging out...");
     },
+  },
+  async mounted() {
+    await this.fetchSensorData();
+    this.interval = setInterval(async () => {
+      await this.fetchSensorData();
+    }, 5000); // Fetch data every 5 seconds
+  },
+  beforeUnmount() {
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
   },
 };
 </script>
@@ -121,7 +152,7 @@ export default {
 
 /* Status Cards */
 .status-cards {
-  gap: 12px;
+  gap: 2px;
 }
 
 .status-card {
@@ -171,5 +202,14 @@ export default {
 .logout-text {
   font-weight: bold;
   color: #f44336;
+}
+.status-cards {
+  width: 100%; /* Full width for the row */
+  margin: 0px;
+}
+
+.status-card {
+  width: 100%; /* Full width for the cards */
+  margin: 0px;
 }
 </style>
